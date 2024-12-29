@@ -1,5 +1,6 @@
 use rust_version::AddListing;
 use std::error::Error;
+use teloxide::types::User;
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*};
 use teloxide::{
     payloads::SendMessageSetters,
@@ -115,6 +116,7 @@ async fn default(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult 
     Ok(())
 }
 async fn start(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
+    println!("{:?}", msg);
     goto_menu(bot, dialogue, msg).await?;
     Ok(())
 }
@@ -275,12 +277,20 @@ async fn confirm(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult 
                 description,
             } = current_state
             {
-                println!("{}, {}", photos.join("/"), description);
-                reqwest::Client::new()
-                    .post("http:://localhost:3000/listing")
-                    .json(&AddListing { description })
-                    .send()
-                    .await?;
+                if let Some(user) = &msg.from {
+                    let UserId(user_telegram_id) = user.id;
+                    println!("{}, {}", photos.join("/"), description);
+                    reqwest::Client::new()
+                        .post("http://127.0.0.1:3000/listing")
+                        .json(&AddListing {
+                            user_telegram_id,
+                            description,
+                        })
+                        .send()
+                        .await?;
+                } else {
+                    println!("No user found in {:?}", msg);
+                }
             }
             bot.send_message(msg.chat.id, "Published! Check the Buy-and-sell channel")
                 .await?;

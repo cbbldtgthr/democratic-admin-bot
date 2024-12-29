@@ -5,7 +5,10 @@ fn add_listing() {
     println!("Sending AddListing");
     let response = reqwest::blocking::Client::new()
         .post("http://127.0.0.1:3000/listing")
-        .json(&AddListing { description })
+        .json(&AddListing {
+            description,
+            user_telegram_id: 1,
+        })
         .send();
 
     println!("{:?}", response);
